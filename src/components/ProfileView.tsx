@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText, X, HelpCircle, Lock } from 'lucide-react';
+import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
-import { ProfileSkeleton } from './LoadingSkeleton';
 
 const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 const SERVICE_CATEGORIES = ['Design', 'Web', 'Photography', 'Marketing', 'Video', 'Writing'];
@@ -52,9 +51,17 @@ export function ProfileView() {
       setDiscoveryPreference(profile.discovery_preference || 'my_city');
       setPostVisibility(profile.post_visibility || 'public');
       setServiceCategory(profile.service_category || '');
-      setServicesOffered(profile.services_offered || []);
+      setServicesOffered(
+        typeof profile.services_offered === 'string'
+          ? profile.services_offered.split(',').map(s => s.trim()).filter(Boolean)
+          : []
+      );
       setWorkMode(profile.work_mode || 'both');
-      setHelpNeeded(profile.help_needed || []);
+      setHelpNeeded(
+        typeof profile.help_needed === 'string'
+          ? profile.help_needed.split(',').map(s => s.trim()).filter(Boolean)
+          : []
+      );
       setPreferredWorkMode(profile.work_mode || 'either');
     }
   }, [profile]);

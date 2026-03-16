@@ -23,6 +23,7 @@ export type Profile = {
   phone: string | null;
   company: string | null;
   city: string | null;
+  area: string | null;
   daily_request_limit: number;
   role: string;
   user_type: string;
@@ -37,6 +38,13 @@ export type Profile = {
   post_visibility: string;
   last_active: string;
   created_at: string;
+  intent: 'offer_services' | 'post_request' | null;
+  discovery_preference: 'be_discovered' | 'find_others' | 'both' | null;
+  company_name: string | null;
+  service_category: string | null;
+  services_offered: string | null;
+  work_mode: 'remote' | 'on-site' | 'both' | null;
+  help_needed: string | null;
 };
 
 export type FileAttachment = {
@@ -58,6 +66,7 @@ export type Note = {
   title: string | null;
   budget: number | null;
   city: string | null;
+  area: string | null;
   category: string | null;
   files: FileAttachment[];
   contact: ContactInfo | null;
@@ -66,6 +75,7 @@ export type Note = {
   daily_request_count: number;
   last_request_reset: string;
   status: 'open' | 'in_progress' | 'fulfilled' | 'deleted';
+  work_mode: 'remote' | 'on-site' | 'both' | null;
   created_at: string;
   updated_at: string;
   fulfilled_by: string | null;

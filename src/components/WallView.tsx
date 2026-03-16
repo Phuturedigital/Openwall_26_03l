@@ -217,8 +217,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     setLoading(false);
   }
 
-  async function handleRequestConnect(note?: Note) {
-    const targetNote = note || selectedNote;
+  async function handleRequestConnect() {
+    const targetNote = selectedNote;
 
     if (!profile) {
       if (onSignInRequired) {
@@ -247,12 +247,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
       if (error) {
         if (error.code === '23505') {
-          if (note) {
-            alert('You have already sent a connection request for this note.');
-          } else {
-            setRequestStatus('pending');
-            alert('You have already sent a connection request for this note.');
-          }
+          setRequestStatus('pending');
+          alert('You have already sent a connection request for this note.');
         } else if (error.message && error.message.includes('Daily request limit')) {
           alert('You have reached your daily request limit (10 requests). Please try again tomorrow.');
         } else if (error.message) {
@@ -261,12 +257,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
           alert('Failed to send connection request. Please try again.');
         }
       } else if (data) {
-        if (note) {
-          alert('Connection request sent! The poster will be notified.');
-        } else {
-          setRequestStatus('pending');
-          alert('Connection request sent! The poster will be notified.');
-        }
+        setRequestStatus('pending');
+        alert('Connection request sent! The poster will be notified.');
       } else {
         alert('Request processed. Please check your Requests page for status.');
       }
@@ -442,7 +434,6 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             const owner = isOwner(note);
             const posterProfile = note.profiles as any;
             const posterName = posterProfile?.full_name || 'Verified User';
-            const posterCity = posterProfile?.city || note.city;
 
             return (
               <motion.article
@@ -573,7 +564,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRequestConnect(note);
+                              setSelectedNote(note);
+                              handleRequestConnect();
                             }}
                             disabled={requesting}
                             className={`${shouldShowReadMore(note.body) ? 'flex-1' : 'w-full'} px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed`}
