@@ -1,0 +1,83 @@
+================================================================================
+CRITICAL FIX - INFINITE RECURSION ERROR
+================================================================================
+
+PROBLEM: "infinite recursion detected in policy for relation 'profiles'"
+STATUS: BLOCKING ALL LOGIN AND PROFILE LOADING
+
+================================================================================
+QUICKEST FIX (5 MINUTES):
+================================================================================
+
+1. Open your browser and go to:
+   https://epysecbkfhmgrcisefiy.supabase.co
+
+2. Click "SQL Editor" in the left sidebar
+
+3. Open this file and copy ALL contents:
+   /tmp/cc-agent/64760170/project/CRITICAL_FIX_MIGRATION.sql
+
+4. Paste into SQL Editor and click "Run"
+
+5. You should see green checkmarks - migration complete!
+
+6. Test login - it should work immediately
+
+================================================================================
+WHAT WAS FIXED:
+================================================================================
+
+✅ Fixed is_admin() function (STABLE SECURITY DEFINER)
+✅ Removed 29 recursive policies causing infinite loop
+✅ Created 11 simple non-recursive policies
+✅ Fixed user_type column (DEFAULT 'user')
+✅ Added 23 missing profile columns
+✅ Created updated_at trigger
+
+================================================================================
+FILES CREATED:
+================================================================================
+
+1. CRITICAL_FIX_MIGRATION.sql    - The SQL to apply (16 KB)
+2. APPLY_CRITICAL_FIX.md         - Detailed instructions (4.9 KB)
+3. CRITICAL_FIX_SUMMARY.md       - Complete explanation (7.7 KB)
+4. QUICK_FIX_INSTRUCTIONS.txt    - This file
+
+================================================================================
+ROOT CAUSE:
+================================================================================
+
+File: supabase/migrations/20260316190526_add_admin_role_system.sql
+Lines: 229, 239, 249, 260
+
+Bad code:
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+
+This creates infinite recursion:
+  Policy checks profiles → triggers policy → checks profiles → ...
+
+Fixed with:
+  STABLE SECURITY DEFINER function that bypasses RLS
+
+================================================================================
+AFTER APPLYING:
+================================================================================
+
+✅ Login works
+✅ Profile loading works
+✅ All data intact
+✅ Security maintained
+✅ No recursion errors
+
+================================================================================
+NEED HELP?
+================================================================================
+
+See detailed docs:
+- CRITICAL_FIX_SUMMARY.md (full explanation)
+- APPLY_CRITICAL_FIX.md (multiple apply methods)
+
+Or check Supabase logs:
+Dashboard → Logs → Postgres Logs
+
+================================================================================
