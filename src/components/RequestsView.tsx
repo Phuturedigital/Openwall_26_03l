@@ -21,50 +21,6 @@ export function RequestsView() {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (!profile) return;
-
-    const channel = supabase
-      .channel('connection-requests-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'connection_requests'
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            loadRequests();
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedRequest = payload.new as ConnectionRequest;
-            setReceivedRequests((prev) =>
-              prev.map((r) =>
-                r.id === updatedRequest.id ? { ...r, ...updatedRequest } : r
-              )
-            );
-            setSentRequests((prev) =>
-              prev.map((r) =>
-                r.id === updatedRequest.id ? { ...r, ...updatedRequest } : r
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setReceivedRequests((prev) =>
-              prev.filter((r) => r.id !== payload.old.id)
-            );
-            setSentRequests((prev) =>
-              prev.filter((r) => r.id !== payload.old.id)
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profile]);
-
   async function loadRequests() {
     if (!profile) return;
 
