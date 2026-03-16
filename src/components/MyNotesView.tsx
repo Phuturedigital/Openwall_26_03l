@@ -51,6 +51,65 @@ export function MyNotesView() {
     loadMyNotes();
   }, [profile]);
 
+  useEffect(() => {
+    if (!profile) return;
+
+    const channel = supabase
+      .channel('my-notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes',
+          filter: `user_id=eq.${profile.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newNote = payload.new as Note;
+            if (newNote.status === 'open' || newNote.status === 'in_progress') {
+              setNotes((prev) => [newNote, ...prev]);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNote = payload.new as Note;
+            if (updatedNote.status === 'open' || updatedNote.status === 'in_progress') {
+              setNotes((prev) =>
+                prev.map((note) =>
+                  note.id === updatedNote.id ? updatedNote : note
+                )
+              );
+            } else {
+              setNotes((prev) => prev.filter((note) => note.id !== updatedNote.id));
+            }
+            if (selectedNote?.id === updatedNote.id) {
+              setSelectedNote(updatedNote);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setNotes((prev) => prev.filter((note) => note.id !== payload.old.id));
+            if (selectedNote?.id === payload.old.id) {
+              setSelectedNote(null);
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'connection_requests'
+        },
+        () => {
+          loadRequestCounts(notes.map(n => n.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile, notes, selectedNote]);
+
   async function loadMyNotes() {
     if (!profile) return;
 

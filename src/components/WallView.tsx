@@ -122,6 +122,56 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   }, [searchQuery, selectedCity]);
 
   useEffect(() => {
+    const channel = supabase
+      .channel('notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes'
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newNote = payload.new as Note;
+            if (newNote.status !== 'deleted' && newNote.status !== 'fulfilled') {
+              if (!selectedCity || newNote.city?.toLowerCase() === selectedCity.toLowerCase()) {
+                if (!searchQuery.trim() ||
+                    newNote.body?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    newNote.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    newNote.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    newNote.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    newNote.area?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                  setNotes((prev) => [newNote, ...prev]);
+                }
+              }
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNote = payload.new as Note;
+            setNotes((prev) =>
+              prev.map((note) =>
+                note.id === updatedNote.id ? updatedNote : note
+              ).filter((note) => note.status !== 'deleted' && note.status !== 'fulfilled')
+            );
+            if (selectedNote?.id === updatedNote.id) {
+              setSelectedNote(updatedNote);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setNotes((prev) => prev.filter((note) => note.id !== payload.old.id));
+            if (selectedNote?.id === payload.old.id) {
+              setSelectedNote(null);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [searchQuery, selectedCity, selectedNote]);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
